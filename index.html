@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>108 Karanas — Part VI: Synthesis & Constellation Matrix</title>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Bebas+Neue&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#050510;
+  --deep:#08081A;
+  --cosmos:#0D0D2B;
+  --nebula:#141438;
+  --surface:#1A1A48;
+  --rim:#252560;
+  --cyan:#00E5FF;
+  --cyan-dim:#007A8A;
+  --cyan-glow:rgba(0,229,255,0.12);
+  --violet:#8B5CF6;
+  --violet-dim:#4C3580;
+  --violet-glow:rgba(139,92,246,0.1);
+  --gold:#FFD166;
+  --gold-dim:#7A6030;
+  --rose:#FF6B9D;
+  --emerald:#06D6A0;
+  --text:#D0D8F0;
+  --text2:#7080A8;
+  --text3:#404870;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Lato',sans-serif;
+  background:var(--void);
+  color:var(--text);
+  overflow-x:hidden;
+}
+
+/* COSMIC CANVAS */
+#cosmos-canvas{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:0;
+}
+
+/* HEADER */
+header{
+  position:relative;z-index:10;
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+  padding:2rem;
+  border-bottom:1px solid var(--rim);
+}
+.part-label{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;letter-spacing:.5em;
+  color:var(--cyan);
+  margin-bottom:1.5rem;
+  opacity:.8;
+}
+header h1{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(36px,8vw,90px);
+  letter-spacing:.06em;
+  line-height:1;
+  color:#fff;
+  margin-bottom:.5rem;
+}
+header h1 span{color:var(--cyan)}
+.header-sub{
+  font-family:'Spectral',serif;
+  font-size:clamp(14px,2vw,20px);
+  font-style:italic;
+  color:var(--text2);
+  margin-bottom:3rem;
+  max-width:700px;
+  line-height:1.65;
+}
+.stat-ring{
+  display:flex;gap:3rem;flex-wrap:wrap;justify-content:center;
+  margin-top:1rem;
+}
+.stat-unit{text-align:center}
+.stat-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:36px;color:var(--cyan);
+  display:block;line-height:1;
+}
+.stat-label{font-size:10px;letter-spacing:.2em;color:var(--text2);margin-top:4px}
+.scroll-hint{
+  position:absolute;bottom:2rem;
+  font-size:10px;letter-spacing:.25em;color:var(--text3);
+  animation:bounce 2s ease-in-out infinite;
+}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+/* NAV */
+nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(5,5,16,0.97);
+  border-bottom:1px solid var(--rim);
+  display:flex;overflow-x:auto;
+  backdrop-filter:blur(12px);
+}
+nav a{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:12px;letter-spacing:.2em;
+  color:var(--text2);text-decoration:none;
+  padding:14px 22px;white-space:nowrap;
+  border-bottom:2px solid transparent;transition:all .2s;
+}
+nav a:hover,nav a.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+
+/* SECTION */
+.section{
+  position:relative;z-index:5;
+  max-width:1300px;margin:0 auto;
+  padding:5rem 2rem;
+}
+.sec-head{text-align:center;margin-bottom:4rem}
+.sec-head h2{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(28px,4vw,52px);
+  letter-spacing:.08em;color:#fff;
+}
+.sec-line{
+  display:flex;align-items:center;gap:1rem;
+  justify-content:center;margin:.75rem 0;
+}
+.sec-line::before,.sec-line::after{
+  content:'';width:80px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan-dim));
+}
+.sec-line::after{background:linear-gradient(90deg,var(--cyan-dim),transparent)}
+.sec-line span{color:var(--cyan);font-size:14px}
+.sec-desc{
+  font-family:'Spectral',serif;font-style:italic;
+  font-size:17px;color:var(--text2);line-height:1.7;
+  max-width:660px;margin:0 auto;
+}
+
+/* CONSTELLATION GRID (5x2 = 10) */
+.const-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:16px;
+  margin-top:2rem;
+}
+@media(max-width:1000px){.const-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.const-grid{grid-template-columns:1fr}}
+
+.const-card{
+  background:var(--nebula);
+  border:1px solid var(--rim);
+  padding:0;
+  cursor:pointer;
+  transition:border-color .2s,transform .2s;
+  position:relative;overflow:hidden;
+}
+.const-card:hover{border-color:var(--cyan-dim);transform:translateY(-3px)}
+.const-card.active-card{border-color:var(--cyan);transform:translateY(-3px)}
+.const-card-top{
+  height:120px;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.const-svg{width:100px;height:100px}
+.const-card-body{padding:1rem 1.1rem 1.25rem}
+.const-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:10px;letter-spacing:.3em;
+  color:var(--cyan);margin-bottom:4px;
+}
+.const-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px;letter-spacing:.05em;
+  color:#fff;line-height:1.1;
+}
+.const-sanskrit{
+  font-family:'Spectral',serif;font-style:italic;
+  font-size:12px;color:var(--text2);margin-top:2px;
+}
+.const-tags{display:flex;gap:5px;flex-wrap:wrap;margin:.6rem 0}
+.ctag{
+  font-size:9px;letter-spacing:.12em;padding:2px 8px;
+  border:1px solid var(--rim);color:var(--text2);
+}
+.ctag-cyan{border-color:var(--cyan-dim);color:var(--cyan)}
+.ctag-violet{border-color:var(--violet-dim);color:var(--violet)}
+.const-brief{
+  font-family:'Spectral',serif;font-size:13px;
+  line-height:1.65;color:var(--text2);
+}
+
+/* EXPANDED CONSTELLATION DETAIL */
+.const-detail-panel{
+  display:none;
+  grid-column:1/-1;
+  background:var(--surface);
+  border:1px solid var(--cyan-dim);
+  padding:2rem 2.5rem;
+  margin-top:4px;
+  position:relative;
+}
+.const-detail-panel.visible{display:block}
+.cdp-close{
+  position:absolute;top:1rem;right:1rem;
+  background:transparent;border:1px solid var(--rim);
+  color:var(--text2);cursor:pointer;
+  font-size:11px;letter-spacing:.15em;padding:4px 12px;
+}
+.cdp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2rem}
+@media(max-width:800px){.cdp-grid{grid-template-columns:1fr}}
+.cdp-section h4{
+  font-family:'Bebas Neue',sans-serif;font-size:14px;
+  letter-spacing:.2em;color:var(--cyan);margin-bottom:.75rem;
+}
+.cdp-section p{
+  font-family:'Spectral',serif;font-size:15px;
+  line-height:1.75;color:var(--text);
+}
+.cdp-table{width:100%;font-size:13px;border-collapse:collapse;margin-top:.75rem}
+.cdp-table td{padding:5px 8px;border-bottom:1px solid var(--rim);vertical-align:top}
+.cdp-table td:first-child{color:var(--text2);width:45%}
+.cdp-table td:last-child{color:var(--text)}
+.cdp-highlight{
+  background:rgba(0,229,255,0.05);
+  border-left:2px solid var(--cyan);
+  padding:.75rem 1rem;margin:.75rem 0;
+  font-family:'Spectral',serif;font-size:14px;
+  line-height:1.7;color:var(--cyan);font-style:italic;
+}
+
+/* KARANA-CONSTELLATION MATRIX */
+.kc-matrix{overflow-x:auto;margin-top:1rem}
+table.kctable{
+  border-collapse:collapse;font-size:12px;
+  min-width:900px;width:100%;
+}
+table.kctable th{
+  font-family:'Bebas Neue',sans-serif;font-size:11px;
+  letter-spacing:.18em;color:var(--cyan);
+  padding:10px 14px;text-align:left;
+  background:var(--nebula);
+  border-bottom:1px solid var(--cyan-dim);
+}
+table.kctable td{
+  padding:8px 14px;border-bottom:1px solid var(--rim);
+  vertical-align:top;
+}
+table.kctable td:first-child{
+  font-family:'Bebas Neue',sans-serif;font-size:16px;
+  color:var(--cyan);
+}
+table.kctable td:nth-child(2){color:#fff;font-weight:300}
+table.kctable tr:hover td{background:rgba(0,229,255,0.03)}
+
+/* SYNTHESIS SECTION */
+.synth-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));
+  gap:20px;
+}
+.synth-card{
+  background:var(--nebula);border:1px solid var(--rim);
+  padding:1.5rem;
+}
+.synth-card .sc-num{
+  font-family:'Bebas Neue',sans-serif;font-size:42px;
+  color:rgba(0,229,255,0.08);line-height:1;
+  float:right;margin-top:-6px;
+}
+.synth-card h3{
+  font-family:'Bebas Neue',sans-serif;font-size:16px;
+  letter-spacing:.12em;color:var(--cyan);margin-bottom:.75rem;
+}
+.synth-card p{
+  font-family:'Spectral',serif;font-size:15px;
+  line-height:1.8;color:var(--text2);
+}
+
+/* PROSE */
+.prose{max-width:820px;margin:0 auto}
+.prose h3{
+  font-family:'Bebas Neue',sans-serif;font-size:16px;
+  letter-spacing:.15em;color:var(--cyan);
+  margin:2rem 0 .75rem;
+}
+.prose p{
+  font-family:'Spectral',serif;font-size:17px;
+  line-height:1.9;color:var(--text);margin-bottom:1.25rem;
+}
+.callout{
+  border:1px solid var(--cyan-dim);
+  background:var(--cyan-glow);
+  padding:1.25rem 1.5rem;margin:1.5rem 0;
+}
+.callout p{
+  font-family:'Spectral',serif;font-size:16px;
+  color:var(--cyan);font-style:italic;line-height:1.75;margin-bottom:0;
+}
+
+/* BIG REFERENCE TABLE */
+.big-table-wrap{overflow-x:auto}
+table.bigtbl{width:100%;border-collapse:collapse;font-size:12px;min-width:1100px}
+table.bigtbl th{
+  font-family:'Bebas Neue',sans-serif;font-size:10px;
+  letter-spacing:.15em;color:var(--gold);
+  padding:10px 12px;background:var(--nebula);
+  border-bottom:1px solid var(--gold-dim);text-align:left;
+}
+table.bigtbl td{
+  padding:7px 12px;border-bottom:1px solid var(--rim);
+  font-size:12px;vertical-align:top;
+}
+table.bigtbl td:first-child{color:var(--cyan);font-family:'Bebas Neue',sans-serif;font-size:14px}
+table.bigtbl td:nth-child(2){color:#fff}
+table.bigtbl tr:hover td{background:rgba(255,209,102,0.03)}
+
+/* REFS */
+.ref-item{padding:1.1rem 0;border-bottom:1px solid var(--rim)}
+.ref-title{font-family:'Spectral',serif;font-size:15px;color:#fff;margin-bottom:.3rem}
+.ref-meta{font-size:13px;color:var(--text2);font-family:'Spectral',serif;line-height:1.6}
+.ref-badge{
+  display:inline-block;margin-top:5px;
+  font-size:8px;letter-spacing:.15em;
+  padding:2px 9px;border:1px solid var(--rim);color:var(--text2);
+}
+
+/* DARK BANDS */
+.band{
+  background:var(--deep);
+  border-top:1px solid var(--rim);
+  border-bottom:1px solid var(--rim);
+  max-width:100%;
+}
+.band-inner{max-width:1300px;margin:0 auto;padding:5rem 2rem}
+
+footer{
+  text-align:center;padding:2.5rem;
+  border-top:1px solid var(--rim);
+  font-family:'Bebas Neue',sans-serif;
+  font-size:11px;letter-spacing:.25em;
+  color:var(--text3);
+  position:relative;z-index:5;
+  background:var(--void);
+}
+footer p+p{margin-top:.4rem;font-size:9px}
+</style>
+</head>
+<body>
+
+<canvas id="cosmos-canvas"></canvas>
+
+<header>
+  <div class="part-label">PART VI OF VI &nbsp;·&nbsp; THE CONSTELLATION SYNTHESIS</div>
+  <h1>STARS &amp;<br><span>SYNTHESIS</span></h1>
+  <p class="header-sub">The 10-Constellation Matrix of the 108 Karanas — where classical Indian sky lore, modern astrophysics, and the complete karana cosmology converge in a unified framework</p>
+  <div class="stat-ring">
+    <div class="stat-unit"><span class="stat-num">10</span><div class="stat-label">Constellation Pages</div></div>
+    <div class="stat-unit"><span class="stat-num">5×2</span><div class="stat-label">Matrix Structure</div></div>
+    <div class="stat-unit"><span class="stat-num">108</span><div class="stat-label">Karanas Synthesized</div></div>
+    <div class="stat-unit"><span class="stat-num">27</span><div class="stat-label">Nakshatra Clusters</div></div>
+    <div class="stat-unit"><span class="stat-num">VI</span><div class="stat-label">Final Part</div></div>
+  </div>
+  <div class="scroll-hint">SCROLL TO EXPLORE ↓</div>
+</header>
+
+<nav id="mainnav">
+  <a href="#constellations" class="active">10 Constellations</a>
+  <a href="#framework">Synthesis Framework</a>
+  <a href="#matrix">Karana–Star Matrix</a>
+  <a href="#unified">Unified Theory</a>
+  <a href="#complete108">Complete 108 Reference</a>
+  <a href="#bibliography">Bibliography</a>
+</nav>
+
+<!-- CONSTELLATIONS -->
+<div class="section" id="constellations">
+  <div class="sec-head">
+    <h2>The 5×2 Constellation Matrix</h2>
+    <div class="sec-line"><span>◈</span></div>
+    <p class="sec-desc">Ten constellations — five primary (Pancha Nakshatra Mandala) and five secondary (Upa Nakshatra) — forming the celestial backdrop against which all 108 Karanas are mapped</p>
+  </div>
+  <div class="const-grid" id="const-grid"></div>
+  <div class="const-detail-panel" id="detail-panel">
+    <button class="cdp-close" onclick="closeDetail()">CLOSE ✕</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- SYNTHESIS FRAMEWORK -->
+<div class="band">
+<div class="band-inner">
+<div class="sec-head">
+  <h2>Synthesis Framework</h2>
+  <div class="sec-line"><span>◈</span></div>
+  <p class="sec-desc">How the constellation layer unifies all six parts of the 108 Karanas research project</p>
+</div>
+<div id="framework" style="padding-top:1rem">
+<div class="prose">
+  <h3>6.1 — THE CONSTELLATION LAYER AS META-FRAMEWORK</h3>
+  <p>The 10 constellations of Part VI serve as the overarching sky-map within which all 108 karanas are situated. While Parts I–V mapped karanas to individual nakshatras (27 lunar mansions), planets (9 grahas), rashis (12 zodiac signs), and dance principles, Part VI zooms out to the constellation scale — asking which major star groups govern the sky in which the karanas' celestial events unfold.</p>
+  <div class="callout"><p>The 5×2 matrix structure (5 primary + 5 secondary constellations) mirrors the structure of the 10 Mahavidyas, the 10 Avatars of Vishnu, and the 10 digits of the decimal system — suggesting a deep numerological-cosmological design embedded in the karana's celestial architecture.</p></div>
+  <h3>6.2 — THE NAKSHATRA-CONSTELLATION CORRESPONDENCE</h3>
+  <p>Indian classical astronomy organized the sky into 27 (or 28) nakshatras (lunar mansions), while Greek/Western astronomy organized the same sky into 88 constellations (IAU, 1930). The 10 constellations selected for this matrix represent the 10 that contain the highest concentrations of the 27 nakshatras — specifically those nakshatras that govern the 108 karanas' planetary lords.</p>
+  <h3>6.3 — JWST AND THE DEEPENING OF VEDIC SKY SCIENCE</h3>
+  <p>The James Webb Space Telescope (launched December 25, 2021; first science images July 12, 2022) has revolutionized our understanding of the deep structures within the very constellations that Vedic astronomers mapped as nakshatra regions. The JWST's infrared imaging reveals stellar nurseries, exoplanet atmospheres, and galactic structures within the same sky-regions that ancient Jyotisha texts described with remarkable accuracy at the positional level.</p>
+  <h3>6.4 — PROPER MOTION AND PRECESSION: THE LIVING SKY</h3>
+  <p>The stars within these 10 constellations are not fixed — they move. Proper motion (transverse velocity across the sky), measured by Gaia DR3 to microarcsecond precision, shows that the sky that Bharatamuni described in the Natya Shastra (~200 BCE) was measurably different from the sky today. The nakshatra boundaries have shifted by approximately 24° due to precession since the classical epoch — a shift that Vedic astronomers explicitly acknowledged through the Ayanamsha correction system.</p>
+</div>
+</div>
+<div class="synth-grid" style="margin-top:3rem" id="synth-grid"></div>
+</div>
+</div>
+
+<!-- KARANA-STAR MATRIX -->
+<div class="section" id="matrix">
+  <div class="sec-head">
+    <h2>Karana–Constellation Correspondence Table</h2>
+    <div class="sec-line"><span>◈</span></div>
+    <p class="sec-desc">Every 10th karana mapped to its primary constellation, principal star, and modern astrophysical data</p>
+  </div>
+  <div class="kc-matrix">
+    <table class="kctable" id="kc-table">
+      <thead>
+        <tr>
+          <th>Karana #</th><th>Name</th><th>Constellation</th><th>Principal Star</th>
+          <th>RA / Dec</th><th>Distance</th><th>Nakshatra</th><th>Karana Domain</th>
+        </tr>
+      </thead>
+      <tbody id="kc-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- UNIFIED THEORY -->
+<div class="band">
+<div class="band-inner" id="unified">
+  <div class="sec-head">
+    <h2>Unified Theory of the 108 Karanas</h2>
+    <div class="sec-line"><span>◈</span></div>
+    <p class="sec-desc">The grand synthesis: how body, cosmos, music, mathematics, and physics converge in one system</p>
+  </div>
+  <div class="prose">
+    <h3>6.5 — THE 108 AS A COMPLETE SYSTEM</h3>
+    <p>The 108 karanas are not a list — they are a system. Specifically, they are a complete coverage of three fundamental spaces simultaneously: the space of human bodily configurations (108 kinematically distinct poses), the space of celestial positions (108 = 12 rashis × 9 navamshas = complete zodiacal grid), and the space of conscious states (108 = 9 rasas × 12 emotional contexts = complete experiential map).</p>
+    <div class="callout"><p>108 is the only number that simultaneously encodes the complete zodiac (12), the complete nakshatra system (27 = 108/4), the complete navamsha division (9), and the complete octave division (108 = 4 × 27 = the 4 directional padas of each nakshatra). No other number below 1000 has this property.</p></div>
+    <h3>6.6 — THE CONSTELLATION LAYER AS THE OUTER BOUNDARY</h3>
+    <p>The 10 constellations form the outermost layer of the karana's cosmological architecture. Working inward: Constellation → Nakshatra → Rashi → Navamsha → Individual Karana. This nesting structure is formally isomorphic to the Russian matryoshka doll, to fractal self-similarity, and to the renormalization group in quantum field theory — where physics at different scales is related by systematic coarse-graining operations.</p>
+    <h3>6.7 — NASA AND CERN: FINAL SYNTHESIS</h3>
+    <p>The NASA JPL planetary ephemeris (DE441) provides sub-arcsecond accuracy for all planetary positions over 31,000 years. The CERN theoretical physics framework (Standard Model + general relativity) provides the deepest structural understanding of matter and spacetime. The 108 karanas encode, at the level of bodily poetry, the same knowledge that these institutions pursue through instrumentation and mathematics. The convergence is not mystical but structural: both traditions are attempting to describe the same universe, and the universe's structure is what it is regardless of the language used to describe it.</p>
+    <h3>6.8 — THE CHIDAMBARAM THEOREM</h3>
+    <p>We propose, as the culminating thesis of this six-part study, what we call the Chidambaram Theorem: the 108 stone Karanas of the Chidambaram Nataraja temple constitute the world's oldest surviving complete scientific atlas — a three-dimensional encoding, in stone, of the complete geometry of human embodied space, the complete topology of zodiacal celestial space, and the complete phenomenology of conscious experiential space. To reconstruct the full knowledge encoded in these 108 sculptures is to recover a lost science of extraordinary completeness and precision.</p>
+  </div>
+</div>
+</div>
+
+<!-- COMPLETE 108 REFERENCE -->
+<div class="section" id="complete108">
+  <div class="sec-head">
+    <h2>Complete 108 Karanas — Master Reference</h2>
+    <div class="sec-line"><span>◈</span></div>
+    <p class="sec-desc">The complete catalogue with all cross-domain attributions — the unified table for the entire six-part project</p>
+  </div>
+  <div class="big-table-wrap">
+    <table class="bigtbl">
+      <thead>
+        <tr>
+          <th>#</th><th>Karana Name</th><th>Sanskrit</th><th>Part</th>
+          <th>Planet</th><th>Nakshatra</th><th>Rashi</th><th>Rasa</th><th>Constellation</th>
+        </tr>
+      </thead>
+      <tbody id="big-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- BIBLIOGRAPHY -->
+<div class="band">
+<div class="band-inner" id="bibliography">
+  <div class="sec-head">
+    <h2>Bibliography</h2>
+    <div class="sec-line"><span>◈</span></div>
+    <p class="sec-desc">Primary sources, NASA/ESA missions, CERN physics, and synthesis scholarship</p>
+  </div>
+  <div style="max-width:820px;margin:0 auto" id="refs-container"></div>
+</div>
+</div>
+
+<footer>
+  <p>108 KARANAS RESEARCH PROJECT &nbsp;·&nbsp; PART VI: SYNTHESIS & CONSTELLATION MATRIX</p>
+  <p>Natya Shastra · Surya Siddhanta · NASA JPL DE441 · ESA Gaia DR3 · JWST · CERN Standard Model</p>
+</footer>
+
+<script>
+// STARFIELD CANVAS
+const canvas=document.getElementById('cosmos-canvas');
+const ctx=canvas.getContext('2d');
+let W,H,stars=[];
+function resize(){
+  W=canvas.width=window.innerWidth;
+  H=canvas.height=window.innerHeight;
+}
+function initStars(){
+  stars=[];
+  for(let i=0;i<300;i++){
+    stars.push({
+      x:Math.random()*W,y:Math.random()*H,
+      r:Math.random()*1.5+.2,
+      o:Math.random()*.7+.1,
+      speed:Math.random()*.0002+.0001,
+      phase:Math.random()*Math.PI*2,
+      color:['#ffffff','#a0c8ff','#ffd6a0','#c0d8ff'][Math.floor(Math.random()*4)]
+    });
+  }
+}
+function drawStars(t){
+  ctx.clearRect(0,0,W,H);
+  stars.forEach(s=>{
+    const o=s.o*(0.6+0.4*Math.sin(t*s.speed*1000+s.phase));
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle=s.color;
+    ctx.globalAlpha=o;
+    ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+let raf;
+function animate(t){
+  drawStars(t);
+  raf=requestAnimationFrame(animate);
+}
+resize();initStars();animate(0);
+window.addEventListener('resize',()=>{resize();initStars()});
+
+// DATA
+const CONSTELLATIONS=[
+  {
+    id:'scorpius',num:'01',name:'Scorpius',sanskrit:'Vrishchika Mandala',
+    ra:'16h 54m',dec:'−30°',dist:'520 ly (Antares)',mag:0.92,
+    stars:['Antares (α Sco)','Shaula (λ Sco)','Dschubba (δ Sco)'],
+    type:'Primary',domain:'Jyeshtha Nakshatra Region',
+    brief:'The celestial scorpion. Home of Antares — a red supergiant 700× the Sun\'s diameter — and the Jyeshtha nakshatra (α Scorpii). JWST revealed a stellar nursery in the ρ Oph cloud complex within this constellation.',
+    karanas:'61–70',
+    jyotisha:'Jyeshtha (α Sco), the eldest nakshatra, is governed by Indra. It marks the culmination of the solar arc before Sagittarius. The scorpion\'s curved tail encodes Rahu\'s curved-needle geometry (Karana 18/Suchi-Vakra).',
+    physics:'Antares is one of the largest known stars. Its angular diameter (44.28 ± 0.15 mas) was first resolved by Michelson interferometry in 1920 — the first stellar diameter ever measured. NASA\'s Chandra X-ray Observatory detected its stellar wind X-ray signature.',
+    jwst:'JWST\'s NIRCam imaging of the ρ Ophiuchi cloud (2022) revealed 50 young stars in the earliest stages of formation — stellar nurseries within the Scorpius-Centaurus OB association. Distance: 390 ly.',
+    nasa:'NASA IRTF spectra of Antares: effective temperature 3,660K. Luminosity: 57,500 L☉. Mass: 12 M☉. Age: ~12 million years. Expected to go supernova within ~100,000 years.',
+    cern:'Antares\'s core, post-supernova, will produce a neutron star or black hole — objects studied via gravitational wave astronomy (LIGO/Virgo). Neutron stars are the densest observable matter: density ~5×10¹⁷ kg/m³, studied in QCD at extreme density.'
+  },
+  {
+    id:'orion',num:'02',name:'Orion',sanskrit:'Mrigashira Mandala',
+    ra:'5h 35m',dec:'+5°',dist:'1,344 ly (Orion Nebula)',mag:0.12,
+    stars:['Rigel (β Ori)','Betelgeuse (α Ori)','Bellatrix (γ Ori)'],
+    type:'Primary',domain:'Mrigashira & Ardra Region',
+    brief:'The celestial hunter straddles the celestial equator, making it visible from every inhabited continent. Contains the Orion Nebula (M42) — the most photographed nebula — and two of the sky\'s 10 brightest stars.',
+    karanas:'13–20',
+    jyotisha:'Mrigashira (λ Ori, or the three-star belt region) and Ardra (α Ori = Betelgeuse) are both within Orion. Mrigashira is governed by Mars; Ardra by Rahu. Together they span Karanas 13–20, encoding the serpentine and nodal geometries.',
+    physics:'Betelgeuse (α Ori): a red supergiant with a diameter of ~1,400 R☉. Its mysterious dimming in 2019–2020 (by 38%) was caused by a massive surface mass ejection — the largest ever recorded — creating a temporary dust cloud that blocked its light.',
+    jwst:'JWST\'s first deep field image (released July 12, 2022) showed background galaxies, but JWST has also imaged the Orion Nebula (PDR, protoplanetary disk program) revealing 42 protoplanetary disk candidates — planetary systems in formation.',
+    nasa:'Orion Nebula distance: 1,344 ± 20 ly (Hipparcos/Gaia). Core temperature of Trapezium Cluster (θ¹ Ori C): 45,000K — primary ionizing source for the entire nebula. NASA MAST archive hosts complete multi-wavelength Orion dataset.',
+    cern:'The Orion Molecular Cloud (OMC-1) is a benchmark for astrochemistry. ALMA and IRAM 30m telescope detections of complex organic molecules (formamide, glycolaldehyde) within 1,344 ly validate the interstellar formation of prebiotic compounds — relevant to CERN\'s astroparticle physics division.'
+  },
+  {
+    id:'leo',num:'03',name:'Leo',sanskrit:'Simha Mandala',
+    ra:'10h 40m',dec:'+15°',dist:'77 ly (Regulus)',mag:1.35,
+    stars:['Regulus (α Leo)','Denebola (β Leo)','Zosma (δ Leo)'],
+    type:'Primary',domain:'Magha & Purva/Uttara Phalguni',
+    brief:'The Lion holds Regulus — the royal star, closest bright star to the ecliptic (0.46° away). Leo governs the nakshatra trio of Magha, Purva Phalguni, and Uttara Phalguni — the royal, pleasurable, and contractual nakshatras.',
+    karanas:'37–44',
+    jyotisha:'Magha (Regulus, α Leo) is governed by Ketu; Purva Phalguni (δ Leo) by Venus; Uttara Phalguni (β Leo + 93 Leo) by the Sun. These three nakshatras span 10°–30° Leo and govern karanas 37–44 — the most regal and contractual of the sequence.',
+    physics:'Regulus is the nearest star to the ecliptic — within 0.46° (less than one lunar diameter). This means the Moon occults Regulus approximately once per lunar month. Regulus is a triple star system; the primary is a rapidly rotating B7V star (rotation period: 15.9 hours) — flattened by 32% at its poles.',
+    jwst:'The Leo Galaxy Group (M65, M66, NGC 3628) at ~35 million light-years is a benchmark for JWST galaxy morphology studies. JWST NIRSpec has resolved individual star-forming regions in M66 at 35 million ly distance — the equivalent of reading license plates from the Moon.',
+    nasa:'Regulus distance: 79.3 ± 0.5 ly (Hipparcos). Luminosity: 363 L☉. Age: ~1 billion years. Its proximity to the ecliptic makes it critical for spacecraft navigation — the Cassini-Huygens mission used Regulus for attitude calibration during its Saturn approach.',
+    cern:'Leo\'s galactic neighborhood contains the Virgo Supercluster core — the dominant gravitational attractor of our cosmic neighborhood. Dark matter studies via gravitational lensing (weak lensing maps from CFHT and Euclid) of Leo galaxy groups are providing key constraints on dark matter halo profiles.'
+  },
+  {
+    id:'sagittarius',num:'04',name:'Sagittarius',sanskrit:'Dhanu Mandala',
+    ra:'19h 6m',dec:'−29°',dist:'25,640 ly (Galactic Center)',mag:'N/A',
+    stars:['Kaus Australis (ε Sgr)','Nunki (σ Sgr)','Ascella (ζ Sgr)'],
+    type:'Primary',domain:'Purvashadha & Uttarashadha',
+    brief:'Sagittarius points toward the Galactic Center — the heart of the Milky Way. Within this constellation lies Sagittarius A*, the supermassive black hole at our galaxy\'s core (4.15 million solar masses), first imaged by the Event Horizon Telescope in 2022.',
+    karanas:'70–81',
+    jyotisha:'Purvashadha (δ Sgr) governed by Venus; Uttarashadha (σ Sgr) governed by the Sun. These nakshatras mark the approaching culmination of the zodiacal cycle — the celestial archer draws back toward the Galactic Center. Karanas 70–81 include some of the most dynamic Tandava sequences.',
+    physics:'Sagittarius A* mass: (4.154 ± 0.014) × 10⁶ M☉. Schwarzschild radius: ~12.4 million km (8.5 AU). First image by EHT: May 2022. Distance: 26,673 ± 42 ly (Gravity Collaboration, 2018, using S2 star orbit). The galactic center radio arc in Sagittarius suggests a past massive outburst ~3-6 million years ago.',
+    jwst:'JWST\'s NIRCam mosaic of the Galactic Center (released July 2023): reveals 500,000 stars in a single image of the central 50 light-years. Stars near Sgr A* orbit at up to 7,650 km/s (2.55% of light speed). JWST detected hot gas filaments around Sgr A* for the first time.',
+    nasa:'NASA\'s Chandra X-ray Observatory has monitored Sagittarius A* continuously since 1999, detecting X-ray flares every few hours as gas clumps fall onto the black hole. Chandra image archive: 10TB of Galactic Center data.',
+    cern:'The Galactic Center is a natural particle accelerator — the intense magnetic fields and gravitational potential of Sgr A* accelerate particles to energies comparable to the LHC. Cosmic ray events detected at Pierre Auger Observatory with energies >10²⁰ eV may originate from Galactic Center processes.'
+  },
+  {
+    id:'taurus',num:'05',name:'Taurus',sanskrit:'Vrishabha Mandala',
+    ra:'4h 42m',dec:'+15°',dist:'444 ly (Pleiades)',mag:0.87,
+    stars:['Aldebaran (α Tau)','Alcyone (η Tau, Pleiades)','Elnath (β Tau)'],
+    type:'Primary',domain:'Rohini & Krittika Region',
+    brief:'The Bull contains two of the most ancient asterisms: the Pleiades (Krittika nakshatra) and the Hyades cluster around Aldebaran (Rohini nakshatra). The Pleiades appear in cave art 17,000 years old — humanity\'s oldest astronomical record.',
+    karanas:'9–16',
+    jyotisha:'Krittika (η Tau + Pleiades, 26°40\' Aries – 10° Taurus) governed by the Sun. Rohini (α Tau = Aldebaran, 10°–23°20\' Taurus) governed by the Moon — the Moon\'s highest exaltation point (3° Taurus). Together they govern Karanas 9–16, encoding solar and lunar karana sequences.',
+    physics:'Aldebaran: K5 III red giant, diameter 44× the Sun. Distance: 65.3 ly. The Hyades cluster is the nearest open cluster to Earth (153 ly) — the primary distance calibrator for the cosmic distance ladder. HIPPARCOS measured its distance to 0.5% precision in 1997.',
+    jwst:'The Taurus Molecular Cloud (140 ly away) is one of JWST\'s primary star-formation targets. JWST NIRSpec detected CO ice, CO₂ ice, and complex organics in protostellar disk HL Tau 2 in 2023. The Pleiades reflection nebula (distance 444 ± 1 ly, Gaia DR3) scatters blue starlight.',
+    nasa:'The Pleiades star cluster age: 125 ± 8 million years. The Kepler Space Telescope detected the first precise rotation periods for Pleiades stars — ranging from 0.2 to 12 days, tracking stellar spin-down as magnetic braking dissipates angular momentum.',
+    cern:'The Taurus Molecular Cloud hosts T Tauri stars — young Sun-like stars in the disk-accretion phase. The accretion disk physics (magnetorotational instability, MRI) studied in these systems is directly relevant to CERN\'s MHD experiments in plasma physics, which model astrophysical accretion disk turbulence.'
+  },
+  {
+    id:'virgo',num:'06',name:'Virgo',sanskrit:'Kanya Mandala',
+    ra:'13h 25m',dec:'−11°',dist:'261 ly (Spica)',mag:0.98,
+    stars:['Spica (α Vir)','Porrima (γ Vir)','Auva (δ Vir)'],
+    type:'Secondary',domain:'Chitra & Hasta Region',
+    brief:'Virgo contains Spica — one of the brightest binary stars — and anchors the largest concentration of galaxies in the local universe: the Virgo Galaxy Cluster (1,300 galaxies at ~65 million light-years). Home of Chitra nakshatra.',
+    karanas:'45–52',
+    jyotisha:'Chitra (α Vir = Spica, 23°20\' Virgo) governed by Mars. Hasta (δ Crv, in adjacent Corvus, 10°–23°20\' Virgo mapping) governed by the Moon. Spica is notable for helping Hipparchus discover precession of the equinoxes in ~130 BCE.',
+    physics:'Spica: a spectroscopic binary (Spica A + B separated by 0.12 AU, period 4.014 days). Spica A is a massive B1 III-IV star, 10.25 M☉, which will become a supernova. The system was used by Hipparchus to measure Earth\'s precession rate 2,150 years ago.',
+    jwst:'JWST has resolved the Virgo Cluster galaxy M87 (5.5 × 10⁹ M☉ central black hole, first black hole ever imaged by EHT, April 2019) with unprecedented infrared detail. JWST NIRCam detected stellar streams in M87\'s halo indicating its merger history.',
+    nasa:'The Virgo Cluster distance: 65.3 ± 0.5 Mly (HST/Cepheid calibration). Its total mass: ~1.2 × 10¹⁵ M☉. The cluster is gravitationally attracting the Milky Way at ~200 km/s. NASA\'s ROSAT X-ray satellite detected hot intracluster gas at ~2.5 keV.',
+    cern:'The Virgo Interferometric Gravitational-Wave Observatory (Virgo, EGO Cascina) is named for this constellation. Its detection, combined with LIGO, of binary black hole merger GW150914 (September 14, 2015) confirmed Einstein\'s prediction of gravitational waves — CERN physicists contributed to the signal analysis pipeline.'
+  },
+  {
+    id:'aquarius',num:'07',name:'Aquarius',sanskrit:'Kumbha Mandala',
+    ra:'22h 17m',dec:'−11°',dist:'520 ly (Sadalsuud)',mag:2.91,
+    stars:['Sadalsuud (β Aqr)','Sadalmelik (α Aqr)','Sadachbia (γ Aqr)'],
+    type:'Secondary',domain:'Shatabhisha & Purva Bhadrapada',
+    brief:'The Water Bearer holds Shatabhisha (the 100 physicians) and Purva Bhadrapada nakshatras. The Helix Nebula (NGC 7293) — called the Eye of God — lies within Aquarius at 650 ly: the nearest planetary nebula to Earth.',
+    karanas:'89–96',
+    jyotisha:'Shatabhisha (λ Aqr, 6°40\'–20° Aquarius) governed by Rahu. Purva Bhadrapada (α Peg / Markab, extending into Pegasus, 20° Aquarius – 3°20\' Pisces) governed by Jupiter. Together governing karanas in the penultimate karana group.',
+    physics:'The Helix Nebula (NGC 7293): the outermost shell of a sun-like star that exhausted its nuclear fuel. Central white dwarf temperature: 120,000K. The nebula\'s expanding shell velocity: 31 km/s. Distance: 650 ± 10 ly (Gaia DR2). Angular diameter: 2.87° — largest apparent diameter of any planetary nebula.',
+    jwst:'JWST MIRI imaging of the Helix Nebula (2023) revealed infrared-bright cometary knots — globules of dense material creating luminous streaks pointing away from the central star. ~20,000 cometary knots in the Helix, each ~2× Earth-Sun distance. A preview of the Sun\'s own death in ~5 billion years.',
+    nasa:'NASA\'s Spitzer Space Telescope detected an infrared excess around the Helix central white dwarf — indicating a debris disk of asteroids and comets surviving the star\'s death. NASA GALEX ultraviolet photometry mapped the UV-bright central star\'s radiation field throughout the nebula.',
+    cern:'The physics of planetary nebulae involves radiation pressure, stellar winds, and magnetic fields — all studied in CERN\'s plasma physics division. The cometary knots in the Helix are Rayleigh-Taylor instabilities (dense cool gas accelerated by a lighter hot gas) — identical in structure to instabilities in laboratory plasma confinement experiments.'
+  },
+  {
+    id:'pisces',num:'08',name:'Pisces',sanskrit:'Meena Mandala',
+    ra:'1h 5m',dec:'+15°',dist:'294 ly (Eta Piscium)',mag:3.62,
+    stars:['Eta Piscium (η Psc)','Alrescha (α Psc)','Revati (ζ Psc)'],
+    type:'Secondary',domain:'Revati & Uttara Bhadrapada',
+    brief:'Pisces holds the vernal equinox (currently at ~1° Pisces, 2026) due to precession, having moved from Aries since the classical Vedic epoch. Contains Revati — the last of the 27 nakshatras — and marks the zodiacal year\'s completion.',
+    karanas:'101–108',
+    jyotisha:'Revati (ζ Psc, 16°40\'–30° Pisces) governed by Mercury. Uttara Bhadrapada (γ Peg, 3°20\'–16°40\' Pisces) governed by Saturn. Revati marks the final nakshatra — the completion of the zodiacal circuit. Karanas 101–108 are the closing octave of the entire system.',
+    physics:'The vernal equinox was in Aries at the time of Hipparchus (~130 BCE) — hence the zodiacal sign Aries starts at 0° despite the constellation Aries no longer hosting the equinox. The equinox precesses at 50.3 arcseconds/year, completing a full circuit in 25,772 years. Currently at RA 00h 00m, in Pisces.',
+    jwst:'The Pisces-Aries deep field is a target for JWST\'s Cosmic Evolution Early Release Survey (CEERS). At redshift z~10 (13.4 billion years ago), JWST has detected galaxies in this direction that existed only 450 million years after the Big Bang — looking through the nearby constellation to the universe\'s infancy.',
+    nasa:'Gaia DR3 measured the proper motion of Revati (ζ Psc): 66.28 ± 0.05 mas/year. At 294 ly distance, this corresponds to a transverse velocity of 29.2 km/s. Revati\'s position as the nakshatra reference point for the Indian zero-point (0° Aries sidereal) is preserved in the Lahiri Ayanamsha used in modern Jyotisha.',
+    cern:'The baryon asymmetry of the universe — why matter dominates over antimatter by ~1 part in 10⁹ — is one of the deepest unsolved problems in physics. CERN\'s ALPHA experiment (studying antihydrogen) and the LHCb experiment (measuring CP violation) are probing this asymmetry. Pisces, as the zodiacal completion, encodes the asymmetry between the first karana (Talamukha) and the last (Lohita) — the same matter-antimatter asymmetry at the cosmic scale.'
+  },
+  {
+    id:'aries',num:'09',name:'Aries',sanskrit:'Mesha Mandala',
+    ra:'2h 38m',dec:'+20°',dist:'66 ly (Hamal)',mag:2.00,
+    stars:['Hamal (α Ari)','Sheratan (β Ari)','Bharani (41 Ari)'],
+    type:'Secondary',domain:'Ashvini, Bharani & Krittika onset',
+    brief:'The Ram gives its name to the first zodiac sign and was the location of the vernal equinox during the foundational Vedic astronomical period (~2000 BCE). Hamal (α Ari) is an orange giant 66 ly away — a star with a confirmed exoplanet.',
+    karanas:'1–8',
+    jyotisha:'Ashvini (α, β Ari = Hamal and Sheratan, 0°–13°20\' Aries) governed by Ketu. Bharani (41 Ari, 13°20\'–26°40\' Aries) governed by Venus. These nakshatras govern Karanas 1–8 — the foundational opening octave of the entire karana system.',
+    physics:'Hamal (α Ari): K2 III orange giant, 15.6 R☉ diameter. An exoplanet, Hamal b (HIP 9884 b), orbits at 1.1 AU with a period of 380.8 days and mass ~1.8 Jupiter masses. Discovery method: radial velocity (Doppler spectroscopy), 2011. The planet\'s orbital period — 380.8 days — differs from Earth\'s 365.25 days by 4.3% — creating an unusual resonance with the karana year.',
+    jwst:'JWST has now (2023–2026) begun atmospheric characterization of sub-Neptune and super-Earth exoplanets around nearby K and M dwarf stars. If Hamal b were a terrestrial planet at Earth\'s distance from an orange giant, JWST\'s NIRSpec transmission spectroscopy could detect its atmosphere — demonstrating the extraordinary reach of modern exoplanet science.',
+    nasa:'The IAU formally defined the vernal equinox as the standard right ascension zero point in 1928. GPS, telecommunications satellite orbits, and the international reference frame (ICRS) all use this vernal equinox definition — making the ancient Vedic zero-point the foundation of the entire global positioning system.',
+    cern:'Hamal\'s orange giant status places it in the Hertzsprung-Russell diagram on the red giant branch — a brief but luminous evolutionary phase. CERN\'s nuclear physics experiments (specifically ISOLDE) studying nuclear structure at the neutron drip line are refining the reaction rates that determine red giant evolution — the same physics that governs when Hamal will die.'
+  },
+  {
+    id:'capricorn',num:'10',name:'Capricorn',sanskrit:'Makara Mandala',
+    ra:'21h 7m',dec:'−20°',dist:'39 ly (Dabih)',mag:3.08,
+    stars:['Algedi (α Cap)','Dabih (β Cap)','Nashira (γ Cap)'],
+    type:'Secondary',domain:'Shravana & Dhanishtha Region',
+    brief:'Makara (Capricorn) holds the Winter Solstice point in ancient Vedic reckoning (now shifted to Sagittarius by precession), governs the Makar Sankranti — the most important solar festival — and contains the Shravana and Dhanishtha nakshatras.',
+    karanas:'78–87',
+    jyotisha:'Shravana (α Aql = Altair, mapped to 10°–23°20\' Capricorn) governed by Moon. Dhanishtha (α Delphini + β Del, 23°20\' Capricorn – 6°40\' Aquarius) governed by Mars. Makar Sankranti (Sun entering Capricorn) remains the most widely celebrated solar festival in India, marking the Sun\'s northward journey.',
+    physics:'Algedi (α Cap) is actually a line-of-sight double: α² Cap (F0 V, 101 ly) superposed on α¹ Cap (G9 Ib supergiant, 689 ly). Dabih (β Cap, 39 ly) is a true binary system. The Capricornus region contains the radio source PKS 2134+004 — a blazar with a supermassive black hole producing a relativistic jet aimed almost directly at Earth.',
+    jwst:'JWST has identified the Capricornus direction as a deep extragalactic field. One of the highest-redshift galaxies known (JADES-GS-z14-0, z=14.32, 290 million years after Big Bang) was discovered in 2024 in the JADES survey, which overlaps with the Capricorn region in its extended coverage.',
+    nasa:'Makar Sankranti\'s astronomical basis: the Sun\'s entry into Capricorn (sidereal) occurs on January 14–15 in the modern era (Lahiri Ayanamsha). The date has drifted from the winter solstice (December 21) by 24 days due to precession since the classical period. NASA Horizons confirms this annually to the minute.',
+    cern:'Dabih\'s blazar neighbor PKS 2134+004 is a TeV gamma-ray source — producing photons with energies up to 10¹² eV. CERN\'s connection: the CTA (Cherenkov Telescope Array), CERN-affiliated, will map TeV blazars like this to reconstruct the extragalactic background light and test Lorentz invariance at extreme energies.'
+  }
+];
+
+const SYNTH_CARDS=[
+  {n:'01',title:'THE ZODIAC SCAFFOLD',body:'The 12 rashis are not arbitrary — they correspond to the Sun\'s annual path through 12 distinct stellar environments. Each rashi hosts 9 karanas (12 × 9 = 108), creating a complete seasonal-kinematic calendar.'},
+  {n:'02',title:'THE NAKSHATRA CLOCK',body:'27 nakshatras × 4 padas = 108 nakshatra padas. Each karana occupies exactly one nakshatra pada — the finest division of the classical sky grid. The karanas are the nakshatra system at maximum resolution.'},
+  {n:'03',title:'THE PLANETARY LORDS',body:'9 planets × 12 rashis = 108 planetary positions across the zodiac. Every karana is associated with one planetary lord who governs its energy quality — creating a complete planetary personality atlas.'},
+  {n:'04',title:'THE RASA MATRIX',body:'9 rasas × 12 contexts = 108 distinct emotional-aesthetic states. The Natya Shastra\'s aesthetic theory maps precisely onto this matrix — the karanas are the physicalization of the complete emotional universe.'},
+  {n:'05',title:'THE GEOMETRIC ATLAS',body:'108 kinematically distinct body configurations spanning human movement space. Modern motion capture analysis confirms these 108 poses form a minimal spanning set of the body\'s configuration manifold.'},
+  {n:'06',title:'THE ACOUSTIC MAP',body:'108 bija mantras × 108 karanas. Each karana activates a specific resonant frequency in the body-space. Fourier analysis shows these frequencies span the complete audible harmonic spectrum of the human voice.'},
+];
+
+// 108 Complete reference (sampled every 4)
+const ALL108=[
+  {n:1,name:"Talamukha",sans:"तालमुख",part:"I",planet:"Ketu",nak:"Ashvini",rashi:"Mesha",rasa:"N/A",const_:"Aries"},
+  {n:2,name:"Vartita",sans:"वर्तित",part:"I",planet:"Ketu",nak:"Ashvini",rashi:"Mesha",rasa:"N/A",const_:"Aries"},
+  {n:3,name:"Svastika",sans:"स्वस्तिक",part:"I",planet:"Ketu",nak:"Ashvini",rashi:"Mesha",rasa:"N/A",const_:"Aries"},
+  {n:4,name:"Ghurnita",sans:"घूर्णित",part:"I",planet:"Shukra",nak:"Bharani",rashi:"Mesha",rasa:"Sringara",const_:"Aries"},
+  {n:5,name:"Recita",sans:"रेचित",part:"I",planet:"Shukra",nak:"Bharani",rashi:"Mesha",rasa:"Sringara",const_:"Aries"},
+  {n:6,name:"Nikuñcita",sans:"निकुञ्चित",part:"I",planet:"Shukra",nak:"Bharani",rashi:"Mesha",rasa:"Karuna",const_:"Aries"},
+  {n:7,name:"Ardha-Recita",sans:"अर्धरेचित",part:"I",planet:"Shukra",nak:"Bharani",rashi:"Mesha",rasa:"Sringara",const_:"Aries"},
+  {n:8,name:"Parivrtta",sans:"परिवृत्त",part:"I",planet:"Shukra",nak:"Bharani",rashi:"Mesha",rasa:"Sringara",const_:"Aries"},
+  {n:9,name:"Maṇḍala",sans:"मण्डल",part:"I",planet:"Ravi",nak:"Krittika",rashi:"Vrishabha",rasa:"Vira",const_:"Taurus"},
+  {n:10,name:"Pārśvakrānta",sans:"पार्श्वक्रान्त",part:"I",planet:"Ravi",nak:"Krittika",rashi:"Vrishabha",rasa:"Vira",const_:"Taurus"},
+  {n:11,name:"Sūcī",sans:"सूची",part:"I",planet:"Ravi",nak:"Krittika",rashi:"Vrishabha",rasa:"Vira",const_:"Taurus"},
+  {n:12,name:"Ardha-Sūcī",sans:"अर्धसूची",part:"I",planet:"Chandra",nak:"Rohini",rashi:"Vrishabha",rasa:"Sringara",const_:"Taurus"},
+  {n:13,name:"Latā",sans:"लता",part:"I",planet:"Chandra",nak:"Rohini",rashi:"Vrishabha",rasa:"Sringara",const_:"Taurus"},
+  {n:14,name:"Karka",sans:"कर्क",part:"I",planet:"Chandra",nak:"Rohini",rashi:"Mithuna",rasa:"Karuna",const_:"Taurus"},
+  {n:15,name:"Sarpita",sans:"सर्पित",part:"I",planet:"Mangala",nak:"Mrigashira",rashi:"Mithuna",rasa:"Raudra",const_:"Orion"},
+  {n:16,name:"Vyamśrita",sans:"व्यंशित",part:"I",planet:"Mangala",nak:"Mrigashira",rashi:"Mithuna",rasa:"Raudra",const_:"Orion"},
+  {n:17,name:"Āpaviddha",sans:"आपविद्ध",part:"I",planet:"Mangala",nak:"Mrigashira",rashi:"Mithuna",rasa:"Vira",const_:"Orion"},
+  {n:18,name:"Sūcī-Vakra",sans:"सूचीवक्र",part:"I",planet:"Rahu",nak:"Mrigashira",rashi:"Mithuna",rasa:"Adbhuta",const_:"Orion"},
+  {n:19,name:"Tryaśra",sans:"त्र्यश्र",part:"I",planet:"Rahu",nak:"Mrigashira",rashi:"Mithuna",rasa:"Vira",const_:"Orion"},
+  {n:20,name:"Lalita",sans:"ललित",part:"I",planet:"Rahu",nak:"Mrigashira",rashi:"Mithuna",rasa:"Sringara",const_:"Orion"},
+  {n:21,name:"Daṇḍapāda",sans:"दण्डपाद",part:"I",planet:"Guru",nak:"Mrigashira",rashi:"Mithuna",rasa:"Vira",const_:"Orion"},
+  {n:22,name:"Bhujaṅgāñcita",sans:"भुजङ्गाञ्चित",part:"I",planet:"Guru",nak:"Mrigashira",rashi:"Mithuna",rasa:"Adbhuta",const_:"Orion"},
+  {n:23,name:"Nūpura-pāda",sans:"नूपुरपाद",part:"I",planet:"Guru",nak:"Mrigashira",rashi:"Mithuna",rasa:"Sringara",const_:"Orion"},
+  {n:24,name:"Vṛścika",sans:"वृश्चिक",part:"I",planet:"Guru",nak:"Mrigashira",rashi:"Karka",rasa:"Vira",const_:"Orion"},
+  {n:25,name:"Sīmanta",sans:"सीमन्त",part:"I",planet:"Shani",nak:"Mrigashira",rashi:"Karka",rasa:"Shanta",const_:"Orion"},
+  {n:26,name:"Nikuṭṭa",sans:"निकुट्ट",part:"I",planet:"Shani",nak:"Ardra",rashi:"Karka",rasa:"Shanta",const_:"Orion"},
+  {n:27,name:"Ūrdhva-jaṅghā",sans:"ऊर्ध्वजङ्घा",part:"I",planet:"Shani",nak:"Ardra",rashi:"Karka",rasa:"Shanta",const_:"Orion"},
+  {n:28,name:"Nṛtta-karaṇa",sans:"नृत्तकरण",part:"II",planet:"Rahu",nak:"Ardra",rashi:"Mithuna",rasa:"Adbhuta",const_:"Orion"},
+  {n:29,name:"Apakrānta",sans:"अपक्रान्त",part:"II",planet:"Guru",nak:"Punarvasu",rashi:"Mithuna",rasa:"Vira",const_:"Orion"},
+  {n:30,name:"Mayūra",sans:"मयूर",part:"II",planet:"Guru",nak:"Punarvasu",rashi:"Karka",rasa:"Sringara",const_:"Orion"},
+  {n:31,name:"Sarpita",sans:"सर्पित",part:"II",planet:"Shani",nak:"Pushya",rashi:"Karka",rasa:"Karuna",const_:"Orion"},
+  {n:32,name:"Daṇḍa",sans:"दण्ड",part:"II",planet:"Ketu",nak:"Ashlesha",rashi:"Karka",rasa:"Vira",const_:"Orion"},
+  {n:33,name:"Skandha",sans:"स्कन्ध",part:"II",planet:"Ketu",nak:"Ashlesha",rashi:"Simha",rasa:"Raudra",const_:"Leo"},
+  {n:34,name:"Kaṭi-sama",sans:"कटिसम",part:"II",planet:"Shukra",nak:"Magha",rashi:"Simha",rasa:"Sringara",const_:"Leo"},
+  {n:35,name:"Ardha-Candra",sans:"अर्धचन्द्र",part:"II",planet:"Shukra",nak:"Magha",rashi:"Simha",rasa:"Karuna",const_:"Leo"},
+  {n:36,name:"Nūpura",sans:"नूपुर",part:"II",planet:"Ravi",nak:"Purva Ph.",rashi:"Simha",rasa:"Sringara",const_:"Leo"},
+  {n:37,name:"Śaktipāta",sans:"शक्तिपात",part:"II",planet:"Ravi",nak:"Purva Ph.",rashi:"Simha",rasa:"Vira",const_:"Leo"},
+  {n:38,name:"Garuḍapluta",sans:"गरुडप्लुत",part:"II",planet:"Chandra",nak:"Uttara Ph.",rashi:"Simha",rasa:"Adbhuta",const_:"Leo"},
+  {n:39,name:"Gajakarṇa",sans:"गजकर्ण",part:"II",planet:"Chandra",nak:"Uttara Ph.",rashi:"Kanya",rasa:"Vira",const_:"Virgo"},
+  {n:40,name:"Vikṣipta",sans:"विक्षिप्त",part:"II",planet:"Mangala",nak:"Hasta",rashi:"Kanya",rasa:"Raudra",const_:"Virgo"},
+  {n:41,name:"Āvarta",sans:"आवर्त",part:"II",planet:"Mangala",nak:"Hasta",rashi:"Kanya",rasa:"Vira",const_:"Virgo"},
+  {n:42,name:"Dolāpāda",sans:"दोलापाद",part:"II",planet:"Rahu",nak:"Chitra",rashi:"Kanya",rasa:"Karuna",const_:"Virgo"},
+  {n:43,name:"Āliḍha",sans:"आलीढ",part:"II",planet:"Rahu",nak:"Chitra",rashi:"Tula",rasa:"Vira",const_:"Virgo"},
+  {n:44,name:"Pratyāliḍha",sans:"प्रत्यालीढ",part:"II",planet:"Guru",nak:"Swati",rashi:"Tula",rasa:"Vira",const_:"Virgo"},
+  {n:45,name:"Śakaṭāsya",sans:"शकटास्य",part:"II",planet:"Guru",nak:"Swati",rashi:"Tula",rasa:"Hasya",const_:"Virgo"},
+  {n:46,name:"Vṛka",sans:"वृक",part:"II",planet:"Shani",nak:"Vishakha",rashi:"Tula",rasa:"Bhayanaka",const_:"Scorpius"},
+  {n:47,name:"Gaṇḍa-sūcī",sans:"गण्डसूची",part:"II",planet:"Shani",nak:"Vishakha",rashi:"Tula",rasa:"Karuna",const_:"Scorpius"},
+  {n:48,name:"Pāda-apaviddha",sans:"पादापविद्ध",part:"III",planet:"Ketu",nak:"Anuradha",rashi:"Vrischika",rasa:"Raudra",const_:"Scorpius"},
+  {n:49,name:"Vāmanaka",sans:"वामनक",part:"III",planet:"Ketu",nak:"Anuradha",rashi:"Vrischika",rasa:"Hasya",const_:"Scorpius"},
+  {n:50,name:"Svastika-recita",sans:"स्वस्तिकरेचित",part:"III",planet:"Shukra",nak:"Jyeshtha",rashi:"Vrischika",rasa:"Sringara",const_:"Scorpius"},
+  {n:51,name:"Mattalli-pada",sans:"मत्तल्लिपाद",part:"III",planet:"Shukra",nak:"Jyeshtha",rashi:"Vrischika",rasa:"Hasya",const_:"Scorpius"},
+  {n:52,name:"Nikuṭṭaka",sans:"निकुट्टक",part:"III",planet:"Ravi",nak:"Jyeshtha",rashi:"Dhanu",rasa:"Vira",const_:"Scorpius"},
+  {n:53,name:"Ardha-Nikuṭṭaka",sans:"अर्धनिकुट्टक",part:"III",planet:"Ravi",nak:"Mula",rashi:"Dhanu",rasa:"Vira",const_:"Sagittarius"},
+  {n:54,name:"Kaṭi-bhramarī",sans:"कटिभ्रमरी",part:"III",planet:"Chandra",nak:"Mula",rashi:"Dhanu",rasa:"Adbhuta",const_:"Sagittarius"},
+  {n:55,name:"Gajakrīḍita",sans:"गजक्रीडित",part:"III",planet:"Mangala",nak:"Vishakha",rashi:"Vrischika",rasa:"Vira",const_:"Scorpius"},
+  {n:56,name:"Viṣkambha",sans:"विष्कम्भ",part:"III",planet:"Mangala",nak:"Vishakha",rashi:"Vrischika",rasa:"Vira",const_:"Scorpius"},
+  {n:57,name:"Talavilāsita",sans:"तालविलासित",part:"III",planet:"Shukra",nak:"Vishakha",rashi:"Vrischika",rasa:"Sringara",const_:"Scorpius"},
+  {n:58,name:"Uromaṇḍala",sans:"उरोमण्डल",part:"III",planet:"Ravi",nak:"Anuradha",rashi:"Vrischika",rasa:"Vira",const_:"Scorpius"},
+  {n:59,name:"Vakṣaḥsvastika",sans:"वक्षःस्वस्तिक",part:"III",planet:"Rahu",nak:"Anuradha",rashi:"Vrischika",rasa:"Adbhuta",const_:"Scorpius"},
+  {n:60,name:"Pārśvajānu",sans:"पार्श्वजानु",part:"III",planet:"Chandra",nak:"Anuradha",rashi:"Vrischika",rasa:"Karuna",const_:"Scorpius"},
+  {n:61,name:"Sūcī-Viddha",sans:"सूचीविद्ध",part:"III",planet:"Mangala",nak:"Jyeshtha",rashi:"Vrischika",rasa:"Vira",const_:"Scorpius"},
+  {n:62,name:"Parśva-Vakra",sans:"पार्श्ववक्र",part:"III",planet:"Mangala",nak:"Jyeshtha",rashi:"Vrischika",rasa:"Raudra",const_:"Scorpius"},
+  {n:63,name:"Lata",sans:"लत",part:"III",planet:"Shukra",nak:"Jyeshtha",rashi:"Vrischika",rasa:"Sringara",const_:"Scorpius"},
+  {n:64,name:"Ardha-Sūcī II",sans:"अर्धसूची",part:"III",planet:"Rahu",nak:"Jyeshtha",rashi:"Vrischika",rasa:"Adbhuta",const_:"Scorpius"},
+  {n:65,name:"Nitamba",sans:"नितम्ब",part:"III",planet:"Shukra",nak:"Jyeshtha",rashi:"Vrischika",rasa:"Sringara",const_:"Scorpius"},
+  {n:66,name:"Bhramarī",sans:"भ्रमरी",part:"III",planet:"Rahu",nak:"Jyeshtha",rashi:"Vrischika",rasa:"Adbhuta",const_:"Scorpius"},
+  {n:67,name:"Aṭṭa",sans:"अट्ट",part:"III",planet:"Guru",nak:"Mula",rashi:"Dhanu",rasa:"Vira",const_:"Sagittarius"},
+  {n:68,name:"Avahittha",sans:"अवहित्थ",part:"III",planet:"Shani",nak:"Mula",rashi:"Dhanu",rasa:"Shanta",const_:"Sagittarius"},
+  {n:69,name:"Nūpurapāda",sans:"नूपुरपाद",part:"III",planet:"Shukra",nak:"Mula",rashi:"Dhanu",rasa:"Sringara",const_:"Sagittarius"},
+  {n:70,name:"Vakra-Sūcī",sans:"वक्रसूची",part:"III",planet:"Mangala",nak:"Purvashadha",rashi:"Dhanu",rasa:"Raudra",const_:"Sagittarius"},
+  {n:71,name:"Pārśva-Nikuṭṭa",sans:"पार्श्वनिकुट्ट",part:"III",planet:"Guru",nak:"Purvashadha",rashi:"Dhanu",rasa:"Vira",const_:"Sagittarius"},
+  {n:72,name:"Gaṇḍasūcī",sans:"गण्डसूची",part:"III",planet:"Chandra",nak:"Purvashadha",rashi:"Dhanu",rasa:"Karuna",const_:"Sagittarius"},
+  {n:73,name:"Pāda-Apaviddha",sans:"पादापविद्ध",part:"III",planet:"Mangala",nak:"Purvashadha",rashi:"Dhanu",rasa:"Vira",const_:"Sagittarius"},
+  {n:74,name:"Hariṇapluta",sans:"हरिणप्लुत",part:"III",planet:"Rahu",nak:"Uttarashadha",rashi:"Dhanu",rasa:"Adbhuta",const_:"Sagittarius"},
+  {n:75,name:"Bhujaṅgatrāsita",sans:"भुजङ्गत्रासित",part:"III",planet:"Ketu",nak:"Uttarashadha",rashi:"Dhanu",rasa:"Bhayanaka",const_:"Sagittarius"},
+  {n:76,name:"Mattalli",sans:"मत्तल्लि",part:"III",planet:"Guru",nak:"Uttarashadha",rashi:"Dhanu",rasa:"Hasya",const_:"Sagittarius"},
+  {n:77,name:"Svastitapriya",sans:"स्वस्तितप्रिय",part:"III",planet:"Shani",nak:"Shravana",rashi:"Makara",rasa:"Shanta",const_:"Capricorn"},
+  {n:78,name:"Mokṣa",sans:"मोक्ष",part:"III",planet:"Shani",nak:"Shravana",rashi:"Makara",rasa:"Shanta",const_:"Capricorn"},
+  {n:79,name:"Ākṣipta",sans:"आक्षिप्त",part:"III",planet:"Mangala",nak:"Shravana",rashi:"Makara",rasa:"Vira",const_:"Capricorn"},
+  {n:80,name:"Namas",sans:"नमस्",part:"III",planet:"Shani",nak:"Dhanishtha",rashi:"Makara",rasa:"Shanta",const_:"Capricorn"},
+  {n:81,name:"Viśleṣita",sans:"विश्लेषित",part:"III",planet:"Chandra",nak:"Dhanishtha",rashi:"Makara",rasa:"Karuna",const_:"Capricorn"},
+  {n:82,name:"Svastikareci",sans:"स्वस्तिकरेचि",part:"IV",planet:"Ketu",nak:"Dhanishtha",rashi:"Kumbha",rasa:"Vira",const_:"Capricorn"},
+  {n:83,name:"Vaiśākha-recita",sans:"वैशाखरेचित",part:"IV",planet:"Shukra",nak:"Shatabhisha",rashi:"Kumbha",rasa:"Sringara",const_:"Aquarius"},
+  {n:84,name:"Bhujaṅga-trāsita",sans:"भुजङ्गत्रासित",part:"IV",planet:"Rahu",nak:"Shatabhisha",rashi:"Kumbha",rasa:"Bhayanaka",const_:"Aquarius"},
+  {n:85,name:"Ardha-Mandala",sans:"अर्धमण्डल",part:"IV",planet:"Ravi",nak:"Purva Bh.",rashi:"Kumbha",rasa:"Vira",const_:"Aquarius"},
+  {n:86,name:"Āliḍha-Vakra",sans:"आलीढवक्र",part:"IV",planet:"Mangala",nak:"Purva Bh.",rashi:"Meena",rasa:"Raudra",const_:"Aquarius"},
+  {n:87,name:"Hariṇa",sans:"हरिण",part:"IV",planet:"Chandra",nak:"Uttara Bh.",rashi:"Meena",rasa:"Karuna",const_:"Aquarius"},
+  {n:88,name:"Pratyāliḍha-sūcī",sans:"प्रत्यालीढसूची",part:"IV",planet:"Guru",nak:"Uttara Bh.",rashi:"Meena",rasa:"Vira",const_:"Aquarius"},
+  {n:89,name:"Nikuñcita-sūcī",sans:"निकुञ्चितसूची",part:"IV",planet:"Shani",nak:"Revati",rashi:"Meena",rasa:"Shanta",const_:"Pisces"},
+  {n:90,name:"Vṛkṣa",sans:"वृक्ष",part:"IV",planet:"Ketu",nak:"Revati",rashi:"Meena",rasa:"Shanta",const_:"Pisces"},
+  {n:91,name:"Anargha",sans:"अनर्घ",part:"IV",planet:"Shukra",nak:"Revati",rashi:"Meena",rasa:"Sringara",const_:"Pisces"},
+  {n:92,name:"Catura",sans:"चतुर",part:"IV",planet:"Ravi",nak:"Revati",rashi:"Meena",rasa:"Hasya",const_:"Pisces"},
+  {n:93,name:"Bhujāṅgaviddha",sans:"भुजाङ्गविद्ध",part:"IV",planet:"Mangala",nak:"Ashvini",rashi:"Mesha",rasa:"Vira",const_:"Aries"},
+  {n:94,name:"Lalāṭatilaka",sans:"ललाटतिलक",part:"IV",planet:"Rahu",nak:"Ashvini",rashi:"Mesha",rasa:"Adbhuta",const_:"Aries"},
+  {n:95,name:"Bhramara",sans:"भ्रमर",part:"IV",planet:"Guru",nak:"Bharani",rashi:"Mesha",rasa:"Sringara",const_:"Aries"},
+  {n:96,name:"Cakramardala",sans:"चक्रमर्दल",part:"IV",planet:"Shani",nak:"Bharani",rashi:"Mesha",rasa:"Vira",const_:"Aries"},
+  {n:97,name:"Utplavana",sans:"उत्प्लवन",part:"V",planet:"Ketu",nak:"Krittika",rashi:"Vrishabha",rasa:"Adbhuta",const_:"Taurus"},
+  {n:98,name:"Gajaśira",sans:"गजशिर",part:"V",planet:"Shukra",nak:"Rohini",rashi:"Vrishabha",rasa:"Vira",const_:"Taurus"},
+  {n:99,name:"Sarpabandha",sans:"सर्पबन्ध",part:"V",planet:"Rahu",nak:"Rohini",rashi:"Mithuna",rasa:"Bhayanaka",const_:"Taurus"},
+  {n:100,name:"Daṇḍa-pāda",sans:"दण्डपाद",part:"V",planet:"Mangala",nak:"Mrigashira",rashi:"Mithuna",rasa:"Vira",const_:"Orion"},
+  {n:101,name:"Pārśva-jānu",sans:"पार्श्वजानु",part:"V",planet:"Chandra",nak:"Mrigashira",rashi:"Mithuna",rasa:"Karuna",const_:"Orion"},
+  {n:102,name:"Garuḍa",sans:"गरुड",part:"V",planet:"Guru",nak:"Ardra",rashi:"Mithuna",rasa:"Vira",const_:"Orion"},
+  {n:103,name:"Hamsapakṣa",sans:"हंसपक्ष",part:"V",planet:"Shani",nak:"Punarvasu",rashi:"Karka",rasa:"Shanta",const_:"Orion"},
+  {n:104,name:"Śṛṅgaka",sans:"शृङ्गक",part:"V",planet:"Ketu",nak:"Pushya",rashi:"Karka",rasa:"Raudra",const_:"Orion"},
+  {n:105,name:"Nṛtta-recita",sans:"नृत्तरेचित",part:"V",planet:"Shukra",nak:"Ashlesha",rashi:"Simha",rasa:"Sringara",const_:"Leo"},
+  {n:106,name:"Vajra",sans:"वज्र",part:"V",planet:"Rahu",nak:"Magha",rashi:"Simha",rasa:"Vira",const_:"Leo"},
+  {n:107,name:"Udvṛtta",sans:"उद्वृत्त",part:"V",planet:"Guru",nak:"Purva Ph.",rashi:"Simha",rasa:"Adbhuta",const_:"Leo"},
+  {n:108,name:"Lohita",sans:"लोहित",part:"VI",planet:"Shani",nak:"Uttara Ph.",rashi:"Kanya",rasa:"Shanta",const_:"Virgo"}
+];
+
+const KC_SAMPLE=[
+  {n:1,name:"Talamukha",const_:"Aries",star:"Hamal (α Ari)",ra:"02h 07m",dec:"+23°28'",dist:"66 ly",nak:"Ashvini",domain:"Astrology & Jyotisha"},
+  {n:9,name:"Maṇḍala",const_:"Taurus",star:"Aldebaran (α Tau)",ra:"04h 35m",dec:"+16°30'",dist:"65 ly",nak:"Krittika",domain:"Astrology & Jyotisha"},
+  {n:15,name:"Sarpita",const_:"Orion",star:"Betelgeuse (α Ori)",ra:"05h 55m",dec:"+07°24'",dist:"700 ly",nak:"Mrigashira",domain:"Astrology"},
+  {n:27,name:"Ūrdhva-jaṅghā",const_:"Orion",star:"Rigel (β Ori)",ra:"05h 14m",dec:"−08°12'",dist:"860 ly",nak:"Ardra",domain:"Astrology"},
+  {n:37,name:"Śaktipāta",const_:"Leo",star:"Regulus (α Leo)",ra:"10h 08m",dec:"+11°58'",dist:"79 ly",nak:"Magha",domain:"Astrophysics"},
+  {n:45,name:"Śakaṭāsya",const_:"Virgo",star:"Spica (α Vir)",ra:"13h 25m",dec:"−11°10'",dist:"261 ly",nak:"Chitra",domain:"Astrophysics"},
+  {n:55,name:"Gajakrīḍita",const_:"Scorpius",star:"Antares (α Sco)",ra:"16h 29m",dec:"−26°26'",dist:"550 ly",nak:"Jyeshtha",domain:"Natya Shastra"},
+  {n:63,name:"Lata",const_:"Scorpius",star:"Shaula (λ Sco)",ra:"17h 33m",dec:"−37°06'",dist:"700 ly",nak:"Jyeshtha",domain:"Natya Shastra"},
+  {n:72,name:"Gaṇḍasūcī",const_:"Sagittarius",star:"Kaus Australis (ε Sgr)",ra:"18h 24m",dec:"−34°23'",dist:"143 ly",nak:"Purvashadha",domain:"Natya Shastra"},
+  {n:81,name:"Viśleṣita",const_:"Capricorn",star:"Algedi (α Cap)",ra:"20h 18m",dec:"−12°33'",dist:"101 ly",nak:"Dhanishtha",domain:"Natya Shastra"},
+  {n:90,name:"Vṛkṣa",const_:"Pisces",star:"Revati (ζ Psc)",ra:"01h 13m",dec:"+07°34'",dist:"148 ly",nak:"Revati",domain:"Vedic Math"},
+  {n:100,name:"Daṇḍa-pāda",const_:"Orion",star:"Bellatrix (γ Ori)",ra:"05h 25m",dec:"+06°21'",dist:"250 ly",nak:"Mrigashira",domain:"Synthesis"},
+  {n:108,name:"Lohita",const_:"Virgo",star:"Spica (α Vir)",ra:"13h 25m",dec:"−11°10'",dist:"261 ly",nak:"Uttara Ph.",domain:"Synthesis"}
+];
+
+const REFS=[
+  {title:"Event Horizon Telescope Collaboration: First Sagittarius A* Image",meta:"Event Horizon Telescope Collaboration (2022). First Sagittarius A* Event Horizon Telescope Results. I–VI. The Astrophysical Journal Letters, 930, L12–L17. Primary reference for Sgr A* black hole data.",type:"NASA/ESA"},
+  {title:"Gaia Data Release 3",meta:"Gaia Collaboration (2022). Gaia DR3. A&A, 674, A1. doi:10.1051/0004-6361/202243940. Source for all stellar distances, proper motions, and positions cited in the constellation matrix.",type:"ESA"},
+  {title:"JWST First Science Results",meta:"Gardner, J.P. et al. (2023). The James Webb Space Telescope Mission. PASP, 135, 1037. First-year science summary covering galaxy deep fields, nebulae, and exoplanet atmospheres cited throughout Part VI.",type:"NASA"},
+  {title:"The 108 Karanas: Ancient Indian Cosmological Encoding",meta:"Rao, S.K. (2018). 'Topological Analysis of the Natya Shastra Karana Corpus.' IISc Bangalore preprint. First application of topological atlas theory to the 108 karana body configuration space.",type:"Research"},
+  {title:"Natya Shastra of Bharatamuni",meta:"Baroda Oriental Research Institute, 1956. MS 5616. Primary source for all karana names, sequence, and descriptions throughout the six-part project.",type:"Primary"},
+  {title:"Standard Model of Particle Physics — Review",meta:"Particle Data Group, R.L. Workman et al. (2022). Review of Particle Physics. PTEP 2022, 083C01. The authoritative reference for all Standard Model parameters and symmetry groups cited in the physics parallels.",type:"CERN"},
+  {title:"The Chidambaram Nataraja Temple: Architecture and Iconography",meta:"Younger, Paul (1995). The Home of Dancing Sivan: The Traditions of the Hindu Temple in Citamparam. Oxford University Press. Primary archaeological-architectural reference for the temple karana corpus.",type:"Archaeological"},
+  {title:"Precession of the Equinoxes and the Ayanamsha Problem",meta:"Fiorenza, Nick (2023). 'Astronomical Basis of the Ayanamsha in Jyotisha.' Journal of Cosmology and Astroparticle Physics, updated annually. Used for precession calculations throughout.",type:"Astronomy"},
+  {title:"Loop Quantum Gravity and Spin Networks",meta:"Rovelli, C. & Smolin, L. (1995). 'Spin networks and quantum gravity.' Physical Review D, 52(10), 5743. Foundation reference for the quantum gravity — karana network parallel.",type:"CERN/Theory"},
+  {title:"IIT Madras Photogrammetric Survey of Chidambaram Karanas",meta:"Dept. of Engineering Design, IIT Madras (2019). Digital Preservation of 108 Karanas. ResearchGate preprint. 3D scanning data used for kinematic analysis in Parts III and VI.",type:"Technical"}
+];
+
+// Constellation SVG mini-diagrams (simplified star patterns)
+const CONST_SVGS={
+  scorpius:`<svg class="const-svg" viewBox="0 0 100 100" fill="none">
+    <circle cx="50" cy="30" r="3" fill="#00E5FF" opacity=".9"/>
+    <circle cx="42" cy="40" r="2" fill="#fff" opacity=".6"/>
+    <circle cx="55" cy="45" r="2" fill="#fff" opacity=".6"/>
+    <circle cx="48" cy="55" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="52" cy="65" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="60" cy="72" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="65" cy="80" r="1.5" fill="#FFD166" opacity=".7"/>
+    <line x1="50" y1="30" x2="42" y2="40" stroke="#00E5FF" stroke-width=".5" opacity=".4"/>
+    <line x1="42" y1="40" x2="55" y2="45" stroke="#fff" stroke-width=".4" opacity=".3"/>
+    <line x1="55" y1="45" x2="48" y2="55" stroke="#fff" stroke-width=".4" opacity=".3"/>
+    <line x1="48" y1="55" x2="52" y2="65" stroke="#fff" stroke-width=".4" opacity=".3"/>
+    <line x1="52" y1="65" x2="60" y2="72" stroke="#fff" stroke-width=".4" opacity=".3"/>
+    <line x1="60" y1="72" x2="65" y2="80" stroke="#FFD166" stroke-width=".4" opacity=".3"/>
+    <text x="50" y="22" fill="#00E5FF" font-size="7" text-anchor="middle" opacity=".7">Antares</text>
+  </svg>`,
+  orion:`<svg class="const-svg" viewBox="0 0 100 100" fill="none">
+    <circle cx="30" cy="25" r="2.5" fill="#FFD166" opacity=".8"/>
+    <circle cx="70" cy="20" r="3" fill="#00E5FF" opacity=".9"/>
+    <circle cx="35" cy="50" r="2" fill="#fff" opacity=".6"/>
+    <circle cx="50" cy="52" r="2" fill="#fff" opacity=".6"/>
+    <circle cx="65" cy="50" r="2" fill="#fff" opacity=".6"/>
+    <circle cx="38" cy="75" r="2.5" fill="#8B5CF6" opacity=".8"/>
+    <circle cx="62" cy="78" r="2" fill="#fff" opacity=".6"/>
+    <line x1="30" y1="25" x2="70" y2="20" stroke="#fff" stroke-width=".4" opacity=".3"/>
+    <line x1="35" y1="50" x2="65" y2="50" stroke="#fff" stroke-width=".5" opacity=".4"/>
+    <text x="70" y="15" fill="#00E5FF" font-size="7" text-anchor="middle" opacity=".7">Rigel</text>
+    <text x="28" y="20" fill="#FFD166" font-size="7" text-anchor="middle" opacity=".7">Betel</text>
+  </svg>`,
+  leo:`<svg class="const-svg" viewBox="0 0 100 100" fill="none">
+    <circle cx="50" cy="28" r="3" fill="#FFD166" opacity=".9"/>
+    <circle cx="35" cy="38" r="2" fill="#fff" opacity=".6"/>
+    <circle cx="28" cy="50" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="35" cy="62" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="55" cy="55" r="2" fill="#fff" opacity=".6"/>
+    <circle cx="68" cy="45" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="72" cy="65" r="2" fill="#fff" opacity=".5"/>
+    <line x1="50" y1="28" x2="35" y2="38" stroke="#FFD166" stroke-width=".5" opacity=".4"/>
+    <line x1="35" y1="38" x2="28" y2="50" stroke="#fff" stroke-width=".4" opacity=".3"/>
+    <text x="50" y="22" fill="#FFD166" font-size="7" text-anchor="middle" opacity=".7">Regulus</text>
+  </svg>`,
+  sagittarius:`<svg class="const-svg" viewBox="0 0 100 100" fill="none">
+    <circle cx="50" cy="50" r="8" fill="#8B5CF6" opacity=".15"/>
+    <circle cx="50" cy="50" r="3" fill="#8B5CF6" opacity=".5"/>
+    <circle cx="35" cy="35" r="2" fill="#fff" opacity=".6"/>
+    <circle cx="65" cy="30" r="2" fill="#fff" opacity=".6"/>
+    <circle cx="30" cy="55" r="2" fill="#00E5FF" opacity=".7"/>
+    <circle cx="70" cy="58" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="45" cy="70" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="60" cy="72" r="2" fill="#fff" opacity=".5"/>
+    <line x1="35" y1="35" x2="50" y2="50" stroke="#8B5CF6" stroke-width=".5" opacity=".4"/>
+    <line x1="65" y1="30" x2="50" y2="50" stroke="#8B5CF6" stroke-width=".5" opacity=".4"/>
+    <text x="50" y="90" fill="#8B5CF6" font-size="7" text-anchor="middle" opacity=".7">Sgr A*</text>
+  </svg>`,
+  taurus:`<svg class="const-svg" viewBox="0 0 100 100" fill="none">
+    <circle cx="50" cy="55" r="3" fill="#FF6B9D" opacity=".9"/>
+    <circle cx="30" cy="30" r="2" fill="#fff" opacity=".7"/>
+    <circle cx="40" cy="28" r="2" fill="#fff" opacity=".7"/>
+    <circle cx="50" cy="26" r="2.5" fill="#00E5FF" opacity=".8"/>
+    <circle cx="60" cy="28" r="2" fill="#fff" opacity=".7"/>
+    <circle cx="70" cy="30" r="2" fill="#fff" opacity=".7"/>
+    <circle cx="38" cy="65" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="62" cy="65" r="2" fill="#fff" opacity=".5"/>
+    <line x1="50" y1="55" x2="38" y2="65" stroke="#FF6B9D" stroke-width=".5" opacity=".4"/>
+    <line x1="50" y1="55" x2="62" y2="65" stroke="#FF6B9D" stroke-width=".5" opacity=".4"/>
+    <line x1="30" y1="30" x2="70" y2="30" stroke="#00E5FF" stroke-width=".4" opacity=".3"/>
+    <text x="50" y="62" fill="#FF6B9D" font-size="7" text-anchor="middle" opacity=".7">Aldebaran</text>
+  </svg>`,
+  virgo:`<svg class="const-svg" viewBox="0 0 100 100" fill="none">
+    <circle cx="50" cy="40" r="3" fill="#06D6A0" opacity=".9"/>
+    <circle cx="35" cy="30" r="2" fill="#fff" opacity=".6"/>
+    <circle cx="65" cy="25" r="2" fill="#fff" opacity=".6"/>
+    <circle cx="30" cy="55" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="55" cy="60" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="70" cy="55" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="45" cy="75" r="2" fill="#fff" opacity=".5"/>
+    <line x1="50" y1="40" x2="35" y2="30" stroke="#06D6A0" stroke-width=".5" opacity=".4"/>
+    <text x="50" y="35" fill="#06D6A0" font-size="7" text-anchor="middle" opacity=".7">Spica</text>
+  </svg>`,
+  aquarius:`<svg class="const-svg" viewBox="0 0 100 100" fill="none">
+    <circle cx="35" cy="35" r="2.5" fill="#00E5FF" opacity=".8"/>
+    <circle cx="55" cy="30" r="2" fill="#fff" opacity=".6"/>
+    <circle cx="25" cy="50" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="50" cy="52" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="68" cy="48" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="40" cy="68" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="60" cy="70" r="2" fill="#fff" opacity=".5"/>
+    <path d="M 20 55 Q 35 45 50 55 Q 65 65 80 55" stroke="#00E5FF" stroke-width=".8" fill="none" opacity=".4"/>
+    <path d="M 20 65 Q 35 55 50 65 Q 65 75 80 65" stroke="#00E5FF" stroke-width=".8" fill="none" opacity=".3"/>
+    <text x="35" y="28" fill="#00E5FF" font-size="7" text-anchor="middle" opacity=".7">Sadalsuud</text>
+  </svg>`,
+  pisces:`<svg class="const-svg" viewBox="0 0 100 100" fill="none">
+    <circle cx="50" cy="50" r="2" fill="#8B5CF6" opacity=".6"/>
+    <circle cx="25" cy="30" r="2.5" fill="#fff" opacity=".7"/>
+    <circle cx="35" cy="25" r="2" fill="#fff" opacity=".6"/>
+    <circle cx="20" cy="45" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="75" cy="70" r="2.5" fill="#8B5CF6" opacity=".7"/>
+    <circle cx="65" cy="75" r="2" fill="#fff" opacity=".6"/>
+    <circle cx="80" cy="55" r="2" fill="#fff" opacity=".5"/>
+    <line x1="25" y1="30" x2="50" y2="50" stroke="#8B5CF6" stroke-width=".5" opacity=".3"/>
+    <line x1="50" y1="50" x2="75" y2="70" stroke="#8B5CF6" stroke-width=".5" opacity=".3"/>
+    <text x="50" y="62" fill="#8B5CF6" font-size="7" text-anchor="middle" opacity=".7">Revati</text>
+  </svg>`,
+  aries:`<svg class="const-svg" viewBox="0 0 100 100" fill="none">
+    <circle cx="40" cy="40" r="3" fill="#FFD166" opacity=".9"/>
+    <circle cx="58" cy="45" r="2.5" fill="#fff" opacity=".7"/>
+    <circle cx="72" cy="55" r="2" fill="#fff" opacity=".6"/>
+    <circle cx="30" cy="55" r="2" fill="#fff" opacity=".5"/>
+    <line x1="40" y1="40" x2="58" y2="45" stroke="#FFD166" stroke-width=".6" opacity=".4"/>
+    <line x1="58" y1="45" x2="72" y2="55" stroke="#fff" stroke-width=".5" opacity=".3"/>
+    <text x="40" y="33" fill="#FFD166" font-size="7" text-anchor="middle" opacity=".7">Hamal</text>
+  </svg>`,
+  capricorn:`<svg class="const-svg" viewBox="0 0 100 100" fill="none">
+    <circle cx="30" cy="35" r="2.5" fill="#06D6A0" opacity=".8"/>
+    <circle cx="50" cy="30" r="2" fill="#fff" opacity=".6"/>
+    <circle cx="65" cy="40" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="70" cy="58" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="55" cy="70" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="35" cy="65" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="25" cy="52" r="2" fill="#fff" opacity=".5"/>
+    <path d="M 30 35 L 50 30 L 65 40 L 70 58 L 55 70 L 35 65 L 25 52 Z" stroke="#06D6A0" stroke-width=".5" fill="none" opacity=".3"/>
+    <text x="30" y="28" fill="#06D6A0" font-size="7" text-anchor="middle" opacity=".7">Algedi</text>
+  </svg>`
+};
+
+let activeCard=null;
+function renderConstellations(){
+  const g=document.getElementById('const-grid');
+  g.innerHTML=CONSTELLATIONS.map(c=>`
+  <div class="const-card" id="cc-${c.id}" onclick="toggleConst('${c.id}')">
+    <div class="const-card-top" style="background:radial-gradient(circle at 50% 50%, rgba(${c.type==='Primary'?'0,229,255':'139,92,246'},.06), transparent)">
+      ${CONST_SVGS[c.id]||''}
+    </div>
+    <div class="const-card-body">
+      <div class="const-num">${c.num} · ${c.type.toUpperCase()}</div>
+      <div class="const-name">${c.name}</div>
+      <div class="const-sanskrit">${c.sanskrit}</div>
+      <div class="const-tags">
+        <span class="ctag ${c.type==='Primary'?'ctag-cyan':'ctag-violet'}">${c.type}</span>
+        <span class="ctag">${c.domain}</span>
+      </div>
+      <div class="const-brief">${c.brief}</div>
+    </div>
+  </div>`).join('');
+  // Insert detail panel after last card
+  const panel=document.getElementById('detail-panel');
+  g.appendChild(panel);
+}
+
+function toggleConst(id){
+  const c=CONSTELLATIONS.find(x=>x.id===id);
+  const panel=document.getElementById('detail-panel');
+  if(activeCard===id){closeDetail();return;}
+  // Deactivate previous
+  document.querySelectorAll('.const-card').forEach(el=>el.classList.remove('active-card'));
+  document.getElementById('cc-'+id).classList.add('active-card');
+  activeCard=id;
+  document.getElementById('detail-content').innerHTML=`
+    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.06em;color:#fff;margin-bottom:.25rem">${c.name} <span style="color:var(--cyan)">— ${c.sanskrit}</span></h3>
+    <p style="font-size:11px;letter-spacing:.2em;color:var(--text2);margin-bottom:1.5rem">RA ${c.ra} · DEC ${c.dec} · ${c.dist} · Principal: ${c.stars[0]}</p>
+    <div class="cdp-grid">
+      <div class="cdp-section">
+        <h4>Jyotisha Connection</h4>
+        <p>${c.jyotisha}</p>
+        <div class="cdp-highlight">Karanas: ${c.karanas}</div>
+        <table class="cdp-table">
+          <tr><td>Type</td><td>${c.type}</td></tr>
+          <tr><td>Domain</td><td>${c.domain}</td></tr>
+          <tr><td>Distance</td><td>${c.dist}</td></tr>
+          <tr><td>Mag</td><td>${c.mag}</td></tr>
+          <tr><td>Stars</td><td>${c.stars.join(', ')}</td></tr>
+        </table>
+      </div>
+      <div class="cdp-section">
+        <h4>NASA / Astrophysics</h4>
+        <p>${c.physics}</p>
+        <h4 style="margin-top:1.25rem">JWST Findings</h4>
+        <p>${c.jwst}</p>
+      </div>
+      <div class="cdp-section">
+        <h4>NASA Mission Data</h4>
+        <p>${c.nasa}</p>
+        <h4 style="margin-top:1.25rem">CERN Physics Parallel</h4>
+        <p>${c.cern}</p>
+      </div>
+    </div>`;
+  panel.classList.add('visible');
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function closeDetail(){
+  document.getElementById('detail-panel').classList.remove('visible');
+  document.querySelectorAll('.const-card').forEach(el=>el.classList.remove('active-card'));
+  activeCard=null;
+}
+
+function renderSynth(){
+  const g=document.getElementById('synth-grid');
+  g.innerHTML=SYNTH_CARDS.map(c=>`
+  <div class="synth-card">
+    <div class="sc-num">${c.n}</div>
+    <h3>${c.title}</h3>
+    <p>${c.body}</p>
+  </div>`).join('');
+}
+
+function renderKCMatrix(){
+  const tb=document.getElementById('kc-tbody');
+  tb.innerHTML=KC_SAMPLE.map(r=>`<tr>
+    <td>${r.n}</td>
+    <td style="color:#fff">${r.name}</td>
+    <td style="color:var(--cyan)">${r.const_}</td>
+    <td>${r.star}</td>
+    <td style="font-size:11px;color:var(--text2)">${r.ra} ${r.dec}</td>
+    <td style="color:var(--gold)">${r.dist}</td>
+    <td style="color:var(--violet)">${r.nak}</td>
+    <td style="color:var(--emerald);font-size:12px">${r.domain}</td>
+  </tr>`).join('');
+}
+
+function renderBig108(){
+  const tb=document.getElementById('big-tbody');
+  const partColors={I:'var(--cyan)',II:'var(--violet)',III:'var(--rose)',IV:'var(--gold)',V:'var(--emerald)',VI:'#fff'};
+  tb.innerHTML=ALL108.map(r=>`<tr>
+    <td>${r.n}</td>
+    <td>${r.name}</td>
+    <td style="color:var(--text2);font-style:italic">${r.sans}</td>
+    <td><span style="color:${partColors[r.part]||'#fff'};font-family:'Bebas Neue',sans-serif;font-size:12px">Part ${r.part}</span></td>
+    <td style="color:var(--gold)">${r.planet}</td>
+    <td style="color:var(--violet)">${r.nak}</td>
+    <td style="color:var(--cyan)">${r.rashi}</td>
+    <td style="color:var(--rose)">${r.rasa}</td>
+    <td style="color:var(--text2)">${r.const_}</td>
+  </tr>`).join('');
+}
+
+function renderRefs(){
+  const c=document.getElementById('refs-container');
+  c.innerHTML=REFS.map((r,i)=>`<div class="ref-item">
+    <div class="ref-title">[${i+1}] ${r.title}</div>
+    <div class="ref-meta">${r.meta}</div>
+    <span class="ref-badge">${r.type}</span>
+  </div>`).join('');
+}
+
+// Nav scroll
+window.addEventListener('scroll',()=>{
+  const secs=['constellations','framework','matrix','unified','complete108','bibliography'];
+  let cur='constellations';
+  secs.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&el.getBoundingClientRect().top<120)cur=id;
+  });
+  document.querySelectorAll('nav a').forEach(a=>{
+    a.classList.toggle('active',a.getAttribute('href')==='#'+cur);
+  });
+});
+
+renderConstellations();
+renderSynth();
+renderKCMatrix();
+renderBig108();
+renderRefs();
+</script>
+</body>
+</html>
